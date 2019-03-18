@@ -1,0 +1,25 @@
+{
+  "name": "${namespace}",
+  "version": "${version}",
+  "description": "A minimal electron-wax-franklin application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": "",
+  "keywords": [
+    "Electron",
+    "wax skeleton",
+    "wax",
+    "wax-franklin"
+  ],
+  "author": "",
+  "license": "${license}",
+  "devDependencies": {
+    "electron": "^4.0.2"
+  },
+  "dependencies": {
+    "npm": "^6.7.0",
+    "nvm": "0.0.4"
+  }
+}
