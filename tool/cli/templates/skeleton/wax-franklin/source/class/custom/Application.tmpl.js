@@ -98,10 +98,12 @@ qx.Class.define("${namespace}.Application",
 
       // Top-Left Button
       var mainmenubtnbutton = new qx.ui.toolbar.Button("MainMenu", "${namespace_as_path}/round-menu-24px.svg").set({show: "icon"});
+      mainmenubtnbutton.getChildControl("icon").set({ width: 24, height: 24 });
 
       // Top-Right MenuButton
       var profilemenubutton = new qx.ui.toolbar.MenuButton("ProfileMenu", "${namespace_as_path}/round-account_circle-24px.svg").set({show: "icon", showArrow: false});
-      
+      profilemenubutton.getChildControl("icon").set({ width: 24, height: 24 });
+
       // Main Menu Popup (VBox)
       var mainmenupopup = new qx.ui.popup.Popup().set({allowGrowY: true, padding: 10});
       mainmenupopup.setLayout(new qx.ui.layout.VBox(0));
@@ -109,8 +111,11 @@ qx.Class.define("${namespace}.Application",
       // Profile and Settings Menu and Menu Buttons
       var profilemenu = new qx.ui.menu.Menu().set({spacingX: 12});
       var profilemenubutton1 = new qx.ui.menu.Button("Edit my profile", "${namespace_as_path}/edit-24px.svg").set({padding: 10});
+      profilemenubutton1.getChildControl("icon").set({ width: 24, height: 24 });
       var settingsmenubutton = new qx.ui.menu.Button("Settings", "${namespace_as_path}/outline-settings-24px.svg").set({padding: 10});
+      settingsmenubutton.getChildControl("icon").set({ width: 24, height: 24 });
       var logoutmenubutton = new qx.ui.menu.Button("Log out", "${namespace_as_path}/exit_to_app-24px.svg").set({padding: 10});
+      logoutmenubutton.getChildControl("icon").set({ width: 24, height: 24 });
 
       // Search Button (hybrid mobile)
       var btnsearchbutton = new qx.ui.toolbar.Button("Search", "${namespace_as_path}/baseline-search-24px.svg").set({show: "icon"});
@@ -879,7 +884,7 @@ qx.Class.define("${namespace}.Application",
       container.add(new qx.ui.basic.Label("Row01Column03"), {row: 1, column: 2});
       container.add(new qx.ui.basic.Label("Row01Column04"), {row: 1, column: 3});
       container.add(new qx.ui.basic.Label("Row01Column05"), {row: 1, column: 4});
-      container.add(new qx.ui.basic.Image("${namespace_as_path}/cancel-24px.svg").set({opacity : .3}), {row: 1, column: 5});
+      container.add(new qx.ui.basic.Image("${namespace_as_path}/cancel-24px.svg").set({opacity : .3, width: 24, height: 24}), {row: 1, column: 5});
 
       // Table Row 02
       container.add(new qx.ui.basic.Label("Did That"), {row: 2, column: 0});
@@ -887,7 +892,7 @@ qx.Class.define("${namespace}.Application",
       container.add(new qx.ui.basic.Label("Row02Column03"), {row: 2, column: 2});
       container.add(new qx.ui.basic.Label("Row02Column04"), {row: 2, column: 3});
       container.add(new qx.ui.basic.Label("Row02Column05"), {row: 2, column: 4});
-      container.add(new qx.ui.basic.Image("${namespace_as_path}/cancel-24px.svg").set({opacity : .3}), {row: 2, column: 5});
+      container.add(new qx.ui.basic.Image("${namespace_as_path}/cancel-24px.svg").set({opacity : .3, width: 24, height: 24}), {row: 2, column: 5});
 
       return container;
     },

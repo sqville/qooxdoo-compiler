@@ -377,6 +377,19 @@ qx.Theme.define("${namespace}.theme.Appearance",
       }
     },
 
+    "wax-window/close-button/icon" :
+    {
+      alias : "image",
+
+      style : function(states)
+      {
+        return {
+          width : 24,
+          height : 24
+        };
+      }
+    },
+
     /*
     ---------------------------------------------------------------------------
     PROGRESSBAR
