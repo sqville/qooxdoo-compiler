@@ -8,7 +8,7 @@
 
 ************************************************************************ */
 
-qx.Theme.define("wax.theme.Color",
+qx.Theme.define("${namespace}.theme.Color",
 {
   extend : qx.theme.indigo.Color,
 

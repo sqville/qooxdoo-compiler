@@ -8,7 +8,7 @@
 
 ************************************************************************ */
 
-qx.Theme.define("wax.theme.Appearance",
+qx.Theme.define("${namespace}.theme.Appearance",
 {
   extend : qx.theme.indigo.Appearance,
 
@@ -128,7 +128,7 @@ qx.Theme.define("wax.theme.Appearance",
 
     /*
     ---------------------------------------------------------------------------
-      wax.MENUBUTTON
+      ${namespace}.MENUBUTTON
     ---------------------------------------------------------------------------
     */
    "mainmenubutton-frame" :
@@ -236,7 +236,7 @@ qx.Theme.define("wax.theme.Appearance",
 
     /*
     ---------------------------------------------------------------------------
-      wax.MENUBUTTON - "hym" = hybrid moble (i.e. phonegap or cordova)
+      ${namespace}.MENUBUTTON - "hym" = hybrid moble (i.e. phonegap or cordova)
     ---------------------------------------------------------------------------
     */
 
@@ -370,7 +370,7 @@ qx.Theme.define("wax.theme.Appearance",
       {
         return {
           marginLeft : 2,
-          icon : states.hovered ? "wax/close-red-24px.svg" : "wax/close-24px.svg",
+          icon : states.hovered ? "${namespace_as_path}/close-red-24px.svg" : "${namespace_as_path}/close-24px.svg",
           padding : [ 1, 2 ],
           cursor : states.disabled ? undefined : "pointer"
         };
@@ -419,7 +419,7 @@ qx.Theme.define("wax.theme.Appearance",
 
     /*
     ---------------------------------------------------------------------------
-      wax.UPLOAD
+      ${namespace}.UPLOAD
     ---------------------------------------------------------------------------
     */
    

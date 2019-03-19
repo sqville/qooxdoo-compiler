@@ -8,7 +8,7 @@
 
 ************************************************************************ */
 
-qx.Theme.define("wax.theme.Decoration",
+qx.Theme.define("${namespace}.theme.Decoration",
 {
   extend : qx.theme.indigo.Decoration,
 
@@ -39,7 +39,7 @@ qx.Theme.define("wax.theme.Decoration",
     {
       style :
       {
-        backgroundImage: "wax/baseline-expand_less-24px.svg",
+        backgroundImage: "${namespace_as_path}/baseline-expand_less-24px.svg",
         backgroundRepeat: "no-repeat",
         backgroundPositionX: "right",
         backgroundPositionY: "center"
@@ -50,7 +50,7 @@ qx.Theme.define("wax.theme.Decoration",
     {
       style :
       {
-        backgroundImage: "wax/baseline-expand_more-24px.svg",
+        backgroundImage: "${namespace_as_path}/baseline-expand_more-24px.svg",
         backgroundRepeat: "no-repeat",
         backgroundPositionX: "right",
         backgroundPositionY: "center"
@@ -61,7 +61,7 @@ qx.Theme.define("wax.theme.Decoration",
     {
       style :
       {
-        backgroundImage: "wax/chevron_right-24px.svg",
+        backgroundImage: "${namespace_as_path}/chevron_right-24px.svg",
         backgroundRepeat: "no-repeat",
         backgroundPositionX: "right",
         backgroundPositionY: "center"

@@ -8,14 +8,14 @@
 
 ************************************************************************ */
 
-qx.Theme.define("wax.theme.Theme",
+qx.Theme.define("${namespace}.theme.Theme",
 {
   meta :
   {
-    color : wax.theme.Color,
-    decoration : wax.theme.Decoration,
-    font : wax.theme.Font,
+    color : ${namespace}.theme.Color,
+    decoration : ${namespace}.theme.Decoration,
+    font : ${namespace}.theme.Font,
     icon : qx.theme.icon.Tango,
-    appearance : wax.theme.Appearance
+    appearance : ${namespace}.theme.Appearance
   }
 });

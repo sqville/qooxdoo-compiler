@@ -8,7 +8,7 @@
 
 ************************************************************************ */
 
-qx.Theme.define("wax.theme.Font",
+qx.Theme.define("${namespace}.theme.Font",
 {
   extend : qx.theme.indigo.Font,
 
