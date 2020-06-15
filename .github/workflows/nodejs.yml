@@ -1,0 +1,45 @@
+name: Test and Deploy
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  # Test changes from PRs
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/master'
+    strategy:
+      matrix:
+        node-version: [8.x, 10.x, 12.x]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm ci
+      - name: Run qx test for built-in compiler tests
+        run: ./qx test --serve=0 || true
+      - name: Run  external CLI and API tests
+        run: npm test
+        env:
+          CI: true
+
+  deploy:
+    name: Deploy API Viewer
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: npm ci
+      - name: Build API Viewer
+        run: ./qx deploy --out=./html --source-maps
+      - name: Deploy API Viewer
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./html

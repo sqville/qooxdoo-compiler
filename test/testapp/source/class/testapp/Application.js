@@ -3,7 +3,7 @@
  *    qxcompiler - node.js based replacement for the Qooxdoo python
  *    toolchain
  *
- *    https://github.com/qooxdoo/qxcompiler
+ *    https://github.com/qooxdoo/qooxdoo-compiler
  *
  *    Copyright:
  *      2011-2017 Zenesis Limited, http://www.zenesis.com
@@ -26,6 +26,7 @@
  * because the unit tests will enable and disable features to test the compiler output.
  *
  * @asset(testapp/*)
+ * @asset(qx/test/script.js)
  * @asset(abc/def/myicon.gif)
  * @require(qx.io.remote.Rpc)
  * @require(testapp.WrongClassName)
@@ -48,6 +49,9 @@ qx.Class.define("testapp.Application", {
      * startup of the application
      *
      * @lint ignoreDeprecated(alert)
+     * @ignore(TEST_EXTERNAL)
+     * @ignore(SCRIPT_LOADED)
+     * @ignore(jQuery)
      */
     main: function () {
       // Call super class
@@ -58,7 +62,7 @@ qx.Class.define("testapp.Application", {
       }catch(ex) {
         console.log("Found intentionally uindefined value");
       }
-
+      
       // Enable logging in debug variant
       if (qx.core.Environment.get("qx.debug")) {
         // support native logging capabilities, e.g. Firebug for Firefox
@@ -138,6 +142,10 @@ qx.Class.define("testapp.Application", {
       if (qx.core.Environment.get("qx.promise")) {
         console.log("Promises are enabled");
       }
+      
+      qx.core.Assert.assertTrue(this.tr("translatedString") == "en: translatedString");
+      qx.core.Assert.assertTrue(this.tr("Call \"me\"") == "en: Call \"me\"");
+      qx.core.Assert.assertTrue(this.tr("This has\nsome\nnewlines") == "en: This has\nsome\nnewlines");
 
       console.log(JSON.stringify({
         appValue, envVar1, envVar2, envVar3, envVar4,
@@ -157,6 +165,46 @@ qx.Class.define("testapp.Application", {
       }, this);
       
       new testapp.test.TestInnerClasses().testInnerClasses();
+      
+      console.log("TestThat1.toHashCode() = " + (new testapp.TestThat1()).toHashCode());
+      console.log("TestThat2.toHashCode() = " + (new testapp.TestThat2()).toHashCode());
+      
+      new testapp.Issue309();
+      new testapp.Issue206();
+      new testapp.Issue240();
+      new testapp.Issue186();
+      new testapp.Issue461().unusedDestructedArray();
+      new testapp.Issue488();
+      new testapp.Issue494();
+      new testapp.Issue494PartTwo();
+      new testapp.Issue495();
+      new testapp.Issue500();
+      new testapp.Issue503();
+      new testapp.InnerEs6Classes();
+      new testapp.Warnings1();
+      
+      qx.core.Assert.assertTrue(TEST_EXTERNAL === "loaded");
+      qx.core.Assert.assertTrue(SCRIPT_LOADED === true);
+      qx.core.Assert.assertTrue(typeof jQuery == "function");
+      qx.core.Assert.assertTrue(qx.locale.Number.getDecimalSeparator("nl").toString() === ",");
+      
+      qx.core.Assert.assertTrue(qx.core.Environment.get("testappCompilerApi") === "two");
+      qx.core.Assert.assertTrue(qx.core.Environment.get("testappLibraryApi") === "one");
+      qx.core.Assert.assertTrue(qx.core.Environment.get("testlibCompilerApi") === undefined);
+      qx.core.Assert.assertTrue(qx.core.Environment.get("testlibLibraryApi") === "one");
+      
+      const obj = {
+          foo: {
+            bar: {
+              baz: 42,
+            },
+          },
+        };
+
+      qx.core.Assert.assertTrue(obj?.foo?.bar?.baz === 42);
+      qx.core.Assert.assertTrue(obj?.qux?.baz === undefined);
+      
+      var abc = (<div>Hello World</div>);
     },
 
     undocumentedMethod: function () {

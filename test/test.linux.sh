@@ -1,43 +1,32 @@
+#!/usr/bin/env bash
 set -x
-rm -rf myapp
-# test create app
-qx create myapp -I --type server -v || exit $?
-cd myapp
-qx compile -v --clean || exit $?
-node compiled/source/myapp/myapp.js || exit $?
-# test add contrib
-qx contrib update  -v|| exit $?
-qx contrib list    -v|| exit $?
-qx contrib install oetiker/UploadWidget -v --release v1.0.1 || exit $?
-qx contrib install cboulanger/qx-contrib-Dialog -v || exit $?
-qx contrib install johnspackman/UploadMgr -v || exit $?
-qx contrib install ergobyte/qookery/qookeryace -v || exit $?
-qx contrib install ergobyte/qookery/qookerymaps -v || exit $?
-qx compile -v --clean || exit $?
-node compiled/source/myapp/myapp.js || exit $?
-# test reinstall contrib
-qx clean || exit $?
-qx contrib install -v || exit $?
-qx compile -v --clean || exit $?
-node compiled/source/myapp/myapp.js
-# test remove contrib
-qx contrib remove oetiker/UploadWidget -v || exit $?
-qx contrib remove ergobyte/qookery/qookeryace -v || exit $?
-qx contrib remove ergobyte/qookery/qookerymaps -v || exit $?
-qx compile -v --clean || exit $?
-node compiled/source/myapp/myapp.js || exit $?
-# test install without manifest
-qx contrib install ergobyte/qookery -v || exit $?
-qx compile -v --clean || exit $?
-node compiled/source/myapp/myapp.js || exit $?
-# test add class and add script
-qx add class myapp.Window --extend=qx.ui.window.Window || exit $?
-qx add script ../testdata/npm/script/jszip.js --rename=zip.js || exit $?
-cp ../testdata/npm/application/*.js source/class/myapp
-qx lint --fix --warnAsError ||  exit $?
-qx compile -v --clean || exit $?
-node compiled/source/myapp/myapp.js || exit $?
+set -e
+NODE_OPTS="--no-warnings"
 
-cd ../test
-node test-deps.js
+#npm link
+
+echo "Testing qooxdoo-compiler version $(./qx --version)"
+echo
+
+npx qx package update
+npx qx package install
+npx qx lint
+
+# node API tests
+pushd test
+node $NODE_OPTS test-utils.js
+node $NODE_OPTS test-compiler.js
+node $NODE_OPTS test-deps.js
+node $NODE_OPTS test-config-schemas.js
+node $NODE_OPTS test-pkg-migrate.js
+node $NODE_OPTS test-commands.js
+node $NODE_OPTS test-cli.js
+cd testTranslation
+node $NODE_OPTS run-tests
 cd ..
+popd
+
+# bats CLI tests
+npx bats test/bats/
+
+echo "CLI Tests finished successfully"
