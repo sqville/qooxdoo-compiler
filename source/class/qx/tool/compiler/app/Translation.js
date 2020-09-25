@@ -20,13 +20,13 @@
  *
  * *********************************************************************** */
 
-require("@qooxdoo/framework");
+
 var fs = require("fs");
-var util = require("../util");
 
-const readFile = util.promisify(fs.readFile);
+const {promisify} = require("util");
+const readFile = promisify(fs.readFile);
 
-var log = util.createLog("translation");
+var log = qx.tool.utils.LogManager.createLog("translation");
 
 /**
  * Reads and writes .po files for translation
@@ -148,6 +148,9 @@ qx.Class.define("qx.tool.compiler.app.Translation", {
               function set(key, value, append) {
                 var index = null;
                 var m = key.match(/^([^[]+)\[([0-9]+)\]$/);
+                value = value.replace(/\\t/g, "\t").replace(/\\r/g, "\r")
+                  .replace(/\\n/g, "\n")
+                  .replace(/\\"/g, "\"");
                 if (m) {
                   key = m[1];
                   index = parseInt(m[2]);
@@ -262,12 +265,13 @@ qx.Class.define("qx.tool.compiler.app.Translation", {
                 var value = m[2];
                 if (value.length >= 2 && value[0] == "\"" && value[value.length - 1] == "\"") {
                   value = value.substring(1, value.length - 1);
-                  value = value.replace(/\\t/g, "\t").replace(/\\r/g, "\r")
-                    .replace(/\\n/g, "\n")
-                    .replace(/\\"/g, "\"");
                   set(key, value);
                 }
               });
+
+              if (entry) {
+                saveEntry();
+              }
 
               resolve();
             });
@@ -439,5 +443,3 @@ qx.Class.define("qx.tool.compiler.app.Translation", {
 
   }
 });
-
-module.exports = qx.tool.compiler.app.Translation;

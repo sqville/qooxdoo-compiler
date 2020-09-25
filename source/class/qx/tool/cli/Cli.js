@@ -16,7 +16,7 @@
 
 ************************************************************************ */
 
-require("@qooxdoo/framework");
+
 const path = require("upath");
 const fs = qx.tool.utils.Promisify.fs;
 const semver = require("semver");
@@ -101,10 +101,15 @@ qx.Class.define("qx.tool.cli.Cli", {
      * Initialises this.argv with the bare minimum required to load the config files and begin
      * processing
      */
-    __bootstrapArgv() {
+    async __bootstrapArgv() {
       var title = "qooxdoo command line interface";
-      title = "\n" + title + "\n" + "=".repeat(title.length) + "\n";
-      title += `Versions: @qooxdoo/compiler v${qx.tool.compiler.Version.VERSION}\n\n`;
+      title = "\n" + title + "\n" + "=".repeat(title.length);
+      title += 
+`
+Versions: @qooxdoo/compiler    v${qx.tool.compiler.Version.VERSION}
+          @qooxdqxoo/framework v${await new qx.tool.cli.commands.Command({}).getUserQxVersion()}
+`;
+      title += "\n";
       title +=
       `Typical usage:
         qx <commands> [options]
@@ -172,6 +177,18 @@ qx.Class.define("qx.tool.cli.Cli", {
     },
 
     /**
+     * This is to notify the commands after loading the full args.
+     * The commands can overload special arg arguments here.
+     * e.g. Deploy will will overload the target.
+     */
+    __notifyCommand: function() {
+      let cmd = this._compilerApi.getCommand();
+      if (cmd) {
+        this._compilerApi.getCommand().processArgs(this.argv);
+      }
+    },
+
+    /**
      * Calls the `.load()` method of each library, safe to call multiple times.  This is
      * to delay the calling of `load()` until after we know that the command has been selected
      * by Yargs
@@ -197,6 +214,7 @@ qx.Class.define("qx.tool.cli.Cli", {
      */
     async processCommand(command) {
       qx.tool.compiler.Console.getInstance().setVerbose(this.argv.verbose);
+      command.setCompilerApi(this._compilerApi);
       this._compilerApi.setCommand(command);
       await this.__notifyLibraries();
       try {
@@ -222,13 +240,13 @@ qx.Class.define("qx.tool.cli.Cli", {
      * if you provide a .js file the file must be a module which returns an object which
      * has any of these properties:
      *
-     *  CompilerConfig - the class (derived from qx.tool.cli.api.CompilerApi)
+     *  CompilerApi - the class (derived from qx.tool.cli.api.CompilerApi)
      *    for configuring the compiler
      *
      * Each library can also have a compile.js, and that is also a module which can
      * return an object with any of these properties:
      *
-     *  LibraryConfig - the class (derived from qx.tool.cli.api.LibraryApi)
+     *  LibraryApi - the class (derived from qx.tool.cli.api.LibraryApi)
      *    for configuring the library
      *
      */
@@ -244,13 +262,17 @@ qx.Class.define("qx.tool.cli.Cli", {
      * Does the work of parsing command line arguments and loading `compile.js[on]`
      */
     async __parseArgsImpl() {
-      this.__bootstrapArgv();
-
+      await this.__bootstrapArgv();
 
       /*
        * Detect and load compile.json and compile.js
        */
-      let defaultConfigFilename = this.argv.configFile || qx.tool.config.Compile.config.fileName;
+      let defaultConfigFilename = qx.tool.config.Compile.config.fileName;
+      if (this.argv.configFile) {
+        process.chdir(path.dirname(this.argv.configFile));
+        this.argv.configFile = path.basename(this.argv.configFile);
+        defaultConfigFilename = this.argv.configFile;
+      }
 
       var lockfileContent = {
         version: qx.tool.config.Lockfile.getInstance().getVersion()
@@ -398,6 +420,7 @@ qx.Class.define("qx.tool.cli.Cli", {
        * Now everything is loaded, we can process the command line properly
        */
       await this.__fullArgv();
+      this.__notifyCommand();
 
       let parsedArgs = {
         target: this.argv.target,
@@ -558,7 +581,6 @@ qx.Class.define("qx.tool.cli.Cli", {
      * @param classNames {String[]} array of class names, each of which is in the `packageName` package
      * @param packageName {String} the name of the package to find each command class
      */
-    /* @ignore qx.tool.$$classPath */
     addYargsCommands: function(yargs, classNames, packageName) {
       let pkg = null;
       packageName.split(".").forEach(seg => {
@@ -569,14 +591,12 @@ qx.Class.define("qx.tool.cli.Cli", {
         }
       });
       classNames.forEach(cmd => {
-        require(path.join(qx.tool.$$classPath, packageName.replace(/\./g, "/"), cmd));
         let Clazz = pkg[cmd];
         let data = Clazz.getYargsCommand();
         if (data) {
           if (data.handler === undefined) {
             data.handler = argv => qx.tool.cli.Cli.getInstance().processCommand(new Clazz(argv));
           }
-
           yargs.command(data);
         }
       });

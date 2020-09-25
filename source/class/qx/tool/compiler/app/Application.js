@@ -21,7 +21,7 @@
  * *********************************************************************** */
 
 const path = require("upath");
-require("@qooxdoo/framework");
+
 
 qx.Class.define("qx.tool.compiler.app.Application", {
   extend: qx.core.Object,
@@ -144,7 +144,16 @@ qx.Class.define("qx.tool.compiler.app.Application", {
      * Default is true.
      */
     publish: {
-      type: "Boolean",
+      check: "Boolean",
+      init: true
+    },
+
+    /**
+     * Whether this app is to be deployed
+     * Default is true.
+     */
+    deploy: {
+      check: "Boolean",
       init: true
     },
 
@@ -153,7 +162,7 @@ qx.Class.define("qx.tool.compiler.app.Application", {
      * application (false)
      */
     standalone: {
-      type: "Boolean",
+      check: "Boolean",
       init: true
     },
 
@@ -857,7 +866,6 @@ qx.Class.define("qx.tool.compiler.app.Application", {
     _applyType: function(value, oldValue) {
       var loader = path.join(this.getTemplatePath(), "loader", "loader-" + this.getType() + ".tmpl.js");
       this.setLoaderTemplate(loader);
-      this.setTheme(null);
     },
 
     /**
@@ -917,5 +925,3 @@ qx.Class.define("qx.tool.compiler.app.Application", {
     }
   }
 });
-
-module.exports = qx.tool.compiler.app.Application;

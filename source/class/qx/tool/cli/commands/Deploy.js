@@ -16,16 +16,24 @@
      * Henner Kollmann (Henner.Kollmann@gmx.de, @hkollmann)
 
 ************************************************************************ */
-require("./Compile");
-
-require("@qooxdoo/framework");
 const fs = require("fs");
 const path = require("upath");
-const util = require("../../compiler/util");
 
 /**
- * Build and deploy a project
- * 
+ * Build and deploy a project.
+ *
+ * To add your own deployment actions, use the `compile.js` file by
+ *
+ * - adding a listener for the "afterDeploy" event fired on the command
+ * instance  in the `load()` method of the class extending {@link
+ * qx.tool.cli.api.LibraryApi} or {@link qx.tool.cli.api.CompilerApi}.
+ *
+ * - or by implementing a `afterDeploy()` method in the class
+ * extending {@link qx.tool.cli.api.CompilerApi}
+ *
+ * The event and/or method is called with a {@link qx.event.type.Data}
+ * containing an object with the properties described below.
+ *
  */
 qx.Class.define("qx.tool.cli.commands.Deploy", {
   extend: qx.tool.cli.commands.Compile,
@@ -45,12 +53,6 @@ qx.Class.define("qx.tool.cli.commands.Deploy", {
         type: "boolean",
         default: false,
         alias: "m"
-      },
-      "target": {
-        alias: "t",
-        describe: "Set the target type. Default is build",
-        type: "string",
-        default: "build"
       }
     },
 
@@ -59,8 +61,8 @@ qx.Class.define("qx.tool.cli.commands.Deploy", {
         command: "deploy [options]",
         describe: "deploys qooxdoo application(s)",
         builder   : (() => {
-          let res = Object.assign({}, 
-            qx.tool.cli.commands.Compile.YARGS_BUILDER, 
+          let res = Object.assign({},
+            qx.tool.cli.commands.Compile.YARGS_BUILDER,
             qx.tool.cli.commands.Deploy.YARGS_BUILDER
           );
           delete res.watch;
@@ -76,18 +78,33 @@ qx.Class.define("qx.tool.cli.commands.Deploy", {
     }
   },
 
+  events: {
+
+    /***
+     * fired after deploying. With this event
+     * application can do aditional copying.
+     *
+     * The event data is an object with the following properties:
+     *
+     * targetDir  : {String}  The target dir of the build
+     * deployDir  : {String}  The output dir for the deployment
+     * argv       : {Object}  Arguments
+     * application: {Object}  application to build
+     */
+    "afterDeploy" : "qx.event.type.Data"
+  },
+
   members: {
 
     /*
      * @Override
      */
-    process: async function() {
-      let argv = this.argv;
-      
+    processArgs: function(argv) {
+      this.base(arguments, argv);
       if (!argv.clean) {
         qx.tool.compiler.Console.print("qx.tool.cli.deploy.notClean");
       }
-      
+
       let compileArgv = {
         writeLibraryInfo: false,
         download: false,
@@ -95,54 +112,67 @@ qx.Class.define("qx.tool.cli.commands.Deploy", {
         saveUnminified: false,
         bundling: true,
         minify: "mangle",
-        __deploying: true
+        target: "build",
+        deploying: true
       };
       qx.lang.Object.mergeWith(argv, compileArgv);
+    },
+
+    /*
+     * @Override
+     */
+    process: async function() {
       await this.base(arguments);
 
+      let argv = this.argv;
       let appNames = null;
       if (argv.appName) {
-        compileArgv.appName = argv.appName;
         appNames = {};
         argv.appName.split(",").forEach(appName => appNames[appName] = true);
       }
-      
+
       if (argv.clean) {
         await qx.tool.utils.Promisify.eachOfSeries(this.getMakers(), async maker => {
           let target = maker.getTarget();
-          
+
           await qx.tool.utils.Promisify.eachOfSeries(maker.getApplications(), async app => {
             if (appNames && !appNames[app.getName()]) {
               return;
             }
-            let deployDir = argv.out || ((typeof target.getDeployDir == "function") && target.getDeployDir());
+            if (app.getDeploy() === false) {
+              return;
+            }
+              let deployDir = argv.out || ((typeof target.getDeployDir == "function") && target.getDeployDir());
             if (deployDir) {
               await qx.tool.utils.files.Utils.deleteRecursive(deployDir);
             }
           });
         });
       }
-      
+
       await qx.tool.utils.Promisify.eachOfSeries(this.getMakers(), async (maker, makerIndex) => {
         let target = maker.getTarget();
-        
+
         await qx.tool.utils.Promisify.eachOfSeries(maker.getApplications(), async app => {
           if (appNames && !appNames[app.getName()]) {
             return;
           }
+          if (app.getDeploy() === false) {
+            return;
+          }
           let deployDir = argv.out || ((typeof target.getDeployDir == "function") && target.getDeployDir());
           if (!deployDir) {
-            qx.tool.compiler.Console.print("qx.tool.cli.deploy.deployDirNotSpecified");
+            qx.tool.compiler.Console.print("qx.tool.cli.deploy.deployDirNotSpecified", target.getType());
             return;
           }
 
-          let sourceMaps = argv.sourceMaps || 
-                         ((typeof target.getDeployMap == "function") && target.getDeployMap()) || 
+          let sourceMaps = argv.sourceMaps ||
+                         ((typeof target.getDeployMap == "function") && target.getDeployMap()) ||
                          ((typeof target.getSaveSourceInMap == "function") && target.getSaveSourceInMap());
           let appRoot = target.getApplicationRoot(app);
           let destRoot = path.join(deployDir, app.getName());
           await this.__copyFiles(appRoot, destRoot, sourceMaps);
-          
+
           {
             let from = path.join(target.getOutputDir(), "resource");
             if (fs.existsSync(from)) {
@@ -160,10 +190,20 @@ qx.Class.define("qx.tool.cli.commands.Deploy", {
               fs.copyFileSync(from, to);
             }
           }
+          let data = {
+            targetDir: target.getOutputDir(),
+            deployDir: deployDir,
+            argv: argv,
+            application: app
+          };
+          await this.fireDataEventAsync("afterDeploy", data);
+          if (this.getCompilerApi() && typeof this.getCompilerApi().afterDeploy == "function") {
+            await this.getCompilerApi().afterDeploy(data);
+          }
         });
       });
     },
-    
+
     __copyFiles: async function(srcDir, destDir, sourceMaps) {
       await qx.tool.utils.Utils.makeDirs(destDir);
       let files = await fs.readdirAsync(srcDir);
@@ -180,10 +220,8 @@ qx.Class.define("qx.tool.cli.commands.Deploy", {
         if (ext == ".map" && !sourceMaps) {
           return;
         }
-        
-        
         if (ext == ".js" && !sourceMaps) {
-          await util.mkParentPathAsync(to);
+          await qx.tool.utils.Utils.makeParentDir(to);
           let rs = fs.createReadStream(from, { encoding: "utf8", emitClose: true });
           let ws = fs.createWriteStream(to, { encoding: "utf8", emitClose: true });
           let ss = new qx.tool.utils.Utils.StripSourceMapTransform();
@@ -203,10 +241,10 @@ qx.Class.define("qx.tool.cli.commands.Deploy", {
 
   defer: function(statics) {
     qx.tool.compiler.Console.addMessageIds({
-      "qx.tool.cli.deploy.deployDirNotSpecified": "No deploy dir configured! Use --out parameter or deployPath target property in compile.json."
+      "qx.tool.cli.deploy.deployDirNotSpecified": "No deploy dir for target <%1> configured! Use --out parameter or deployPath target property in compile.json."
     }, "error");
     qx.tool.compiler.Console.addMessageIds({
-      "qx.tool.cli.deploy.notClean": "Incremental compilation - this is faster but may preserve old artifacts, it is recommended to use --clean command line option"
+      "qx.tool.cli.deploy.notClean": "Incremental build compilation - this is faster but may preserve old artifacts, it is recommended to use --clean command line option"
     }, "warning");
   }
 });
